@@ -1,2 +1,16 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+*.py text eol=lf
+*.R text eol=lf
+*.r text eol=lf
+*.ps1 text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.csv text eol=lf
+*.tsv text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf

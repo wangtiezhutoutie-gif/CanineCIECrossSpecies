@@ -1,0 +1,81 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# R temporary files
+.Rhistory
+.RData
+.Rproj.user/
+
+# Operating system files
+Thumbs.db
+.DS_Store
+
+# Large data and model files
+*.h5ad
+*.loom
+*.ckpt
+*.pth
+*.safetensors
+*.h5
+*.rds
+*.RDS
+*.mtx
+*.mtx.gz
+*.npy
+*.npz
+*.pkl
+*.pickle
+*.joblib
+*.onnx
+*.pt
+*.bin
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.7z
+*.xlsx
+*.xls
+*.docx
+
+# Raw data and model/output directories
+raw/
+raw_data/
+RawData/
+models/
+checkpoints/
+outputs/
+# Internal audit records
+AuditRecords/
+FinalPublicationAudit/
+
+# Draft availability statements and internal audit reports
+AuditReport*
+CodeAvailabilityDraft*
+DataAvailabilityDraft*
+FinalPackageVersionUpdate*
+FileNameMapping*
+
+# Packaging-host record is not an analysis environment
+Environments/SystemEnvironment.txt
+
+# Temporary and backup files
+*.log
+*.tmp
+*.bak
+backup/
+backups/
+*_backup_*/
+_pre_public_backup*/
+PUBLIC_RELEASE_REPORT*
+SHA256SUMS*

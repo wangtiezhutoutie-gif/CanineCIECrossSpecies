@@ -1,0 +1,8 @@
+{
+  "status": "FROZEN_IMPLEMENTATION_OF_PRE_SPECIFIED_DECISION_RULES",
+  "source": "Recovered deterministic decision configuration from invalidated Run 003; no scientific criterion changed",
+  "run_reapplied": "TP_V1_0_20260916_004",
+  "rows": 33,
+  "sha256": "8233ac99b258328a33eaed8de548063d7d9c7af3a6d38ed639e9eb51de81d28c",
+  "note": "Run 003 was invalidated by a manifest command parser error after decision configuration creation; Run 004 re-applies this unchanged configuration to both complete frozen candidate pools."
+}

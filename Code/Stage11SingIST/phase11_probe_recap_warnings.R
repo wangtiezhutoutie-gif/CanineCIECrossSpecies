@@ -1,0 +1,32 @@
+project_root <- (function(x) { if (!nzchar(x)) stop("Set CANINE_CIE_PROJECT_ROOT"); x })(Sys.getenv("CANINE_CIE_PROJECT_ROOT"))
+lib <- file.path(project_root, "11_singIST", "environment", "r_library")
+.libPaths(c(lib, .libPaths()))
+options(warn = 1)
+suppressPackageStartupMessages({
+  library(singIST)
+  library(data.table)
+})
+
+s11 <- file.path(project_root, "11_singIST")
+log_path <- file.path(project_root, "logs", "phase11_recap_warning_audit.log")
+zz <- file(log_path, open = "wt")
+sink(zz, type = "output")
+sink(zz, type = "message")
+on.exit({sink(type = "message"); sink(type = "output"); close(zz)}, add = TRUE)
+
+mapping <- readRDS(file.path(s11, "dog_model", "DOG_SINGIST_MAPPING_ORGANISM.rds"))
+fc_a <- readRDS(file.path(s11, "dog_model", "DOG_METHOD_FAITHFUL_FC_LIST.rds"))
+fc_b <- readRDS(file.path(s11, "dog_model", "DOG_DONOR_AWARE_FC_LIST.rds"))
+cache <- fread(file.path(s11, "method_gate", "FROZEN_ENSEMBL104_ORTHOLOGY_CACHE.csv"))
+model <- readRDS(file.path(s11, "human_reference", "models",
+                           "HALLMARK_TNFA_SIGNALING_VIA_NFKB.rds"))
+
+cat("PHASE11_RECAP_WARNING_AUDIT\n")
+cat("pathway=HALLMARK_TNFA_SIGNALING_VIA_NFKB\n")
+cat("TRACK_A_START\n")
+a <- singISTrecapitulations(mapping, model, orthology_cache = cache, FC_list = fc_a)
+cat("TRACK_A_COMPLETE super=", a$superpathway$recapitulation, "\n", sep = "")
+cat("TRACK_B_START\n")
+b <- singISTrecapitulations(mapping, model, orthology_cache = cache, FC_list = fc_b)
+cat("TRACK_B_COMPLETE super=", b$superpathway$recapitulation, "\n", sep = "")
+cat("AUDIT_COMPLETE\n")

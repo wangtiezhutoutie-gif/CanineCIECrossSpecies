@@ -1,0 +1,1855 @@
+项目：Canine CIE×Human Crohn Cross-Species Target Prioritization
+项目根目录：
+${CANINE_CIE_PROJECT_ROOT}\
+
+==================================================
+0.正式状态
+==================================================
+
+EXECUTION_MODE=FAST_PATH_ONLY
+
+DESIGN_STATUS=FROZEN
+DESIGN_VERSION=Target_Prioritization_v1.0
+EXECUTION_SPEC_STATUS=APPROVED_AND_FROZEN
+
+NO_POST_HOC_ANALYTIC_MODIFICATION_AFTER_EXECUTION_START
+
+本模块仅负责：
+
+Cross-species therapeutic evidence integration and prioritization
+
+不是：
+
+target discovery
+drug repurposing
+efficacy validation
+causal inference
+new pathway discovery
+
+核心问题：
+
+Track A：
+Among molecular targets with established or emerging therapeutic relevance
+in Human Crohn disease,which retain concordant,lineage-resolved disease
+biology in canine CIE and therefore warrant prioritized canine validation?
+
+Track B：
+Which conserved molecular nodes emerge from frozen Dog-Human shared disease
+programs and warrant future mechanistic investigation?
+
+最终只回答：
+
+1.哪些Human Crohn治疗靶点值得优先向Dog CIE验证？
+2.哪些Dog-Human保守分子节点值得后续机制研究？
+
+禁止：
+
+-重跑Dog/Human scRNA主分析
+-重跑pseudobulk
+-重跑GSEA
+-重跑LODO
+-重跑SATURN
+-重跑CONCORD
+-重跑singIST
+-重跑mt-QC
+-重跑region
+-重跑CeD
+-重跑GSE190564
+-重跑Dog external
+-重新下载已有表达数据
+-新增scRNA/bulk数据集
+-PPI/hub/degree/betweenness
+-STRING排名
+-CMap
+-网络药理学
+-机器学习target score
+-weighted score
+-为JAK1/STAT3/TNF等预期结果修改标准
+-为了凑候选数量放宽规则
+-结果出来以后新增候选
+-重新打开已经冻结的上游分析
+
+原则：
+
+已有final/frozen结果优先直接读取。
+
+==================================================
+1.运行目录与复现信息
+==================================================
+
+创建：
+
+${CANINE_CIE_PROJECT_ROOT}\TARGET_PRIORITIZATION_V1_0\
+
+仅创建：
+
+00_DESIGN
+01_INPUT_MANIFEST
+02_FROZEN_CANDIDATES
+03_EVIDENCE
+04_DECISION_AUDIT
+05_FINAL_RESULTS
+06_FIGURE_TABLES
+07_LOGS
+_tmp
+
+禁止创建大量无意义中间目录。
+
+生成：
+
+ANALYSIS_RUN_ID
+SCRIPT_WORKFLOW_VERSION
+RUN_START_TIME
+THERAPEUTIC_EVIDENCE_CUTOFF_DATE
+
+ANALYSIS_RUN_ID示例：
+
+TP_V1_0_20260916_001
+
+保存：
+
+00_DESIGN/RUN_METADATA.json
+
+同时保存本执行规范副本：
+
+00_DESIGN/TARGET_PRIORITIZATION_V1_0_FROZEN_SPEC.txt
+
+并计算SHA256。
+
+==================================================
+2.Track A必须Human-first真正盲冻结
+==================================================
+
+在完成：
+
+TRACK_A_FROZEN_CANDIDATES
+
+及其hash之前：
+
+DOG_TARGET_RESULTS_UNLOCKED=FALSE
+
+严禁读取任何Dog candidate-specific结果内容，包括：
+
+-Dog gene logFC/FDR
+-Dog leading-edge
+-Dog pathway NES/FDR
+-Dog LODO candidate表现
+-Dog candidate-specific QC结果
+-Dog candidate-specific文献证据
+-Dog target-specific最终状态
+
+允许：
+
+1.查看目录结构；
+2.读取文件名、路径、size、mtime；
+3.读取不包含candidate结果的数据字典；
+4.定位Dog frozen结果文件在哪里，但不得打开结果值；
+5.读取Human治疗证据。
+
+不得：
+
+先看Dog里哪些target漂亮
+→再决定Human候选池。
+
+==================================================
+3.Track A候选发现范围必须预先冻结
+==================================================
+
+解决问题：
+
+“Track A全部Human初始候选到底从哪里枚举？”
+“什么时候可以认为候选发现已经完成？”
+
+Track A候选发现采用预定义Discovery Universe。
+
+TRACK_A_DISCOVERY_UNIVERSE包括：
+
+SOURCE_CLASS_1_REGULATORY
+
+检索截至：
+
+THERAPEUTIC_EVIDENCE_CUTOFF_DATE
+
+正式具有Crohn disease适应证/治疗依据的监管来源。
+
+优先固定来源：
+
+-FDA
+-EMA
+
+只枚举真实Human Crohn治疗entity及其direct molecular target。
+
+----------------------------------
+
+SOURCE_CLASS_2_MAJOR_CROHN_GUIDELINES
+
+检索截至cutoff date可获得的current major Crohn guidelines。
+
+预定义来源机构：
+
+-ECCO
+-ACG
+-AGA
+
+只提取：
+
+-已建立Human Crohn治疗
+-指南明确讨论的targeted therapy
+-明确治疗entity及direct target
+
+不得利用Dog结果决定查哪条治疗。
+
+----------------------------------
+
+SOURCE_CLASS_3_CROHN_CLINICAL_EMERGING
+
+只用于补充：
+
+尚未达到established，
+但存在明确Human Crohn临床疗效信号的target。
+
+限定：
+
+-Phase2/II
+或
+-Phase3/III
+
+Human Crohn interventional efficacy evidence。
+
+优先：
+
+-peer-reviewed clinical efficacy publication
+-正式trial registry用于身份/试验阶段核对
+
+允许来源：
+
+PubMed
+ClinicalTrials.gov
+
+但必须FAST_PATH。
+
+只做一次结构化targeted search。
+
+禁止：
+
+开放式citation chasing
+从review无限扩展candidate
+全文领域综述
+逐篇寻找所有Crohn实验药物
+
+----------------------------------
+
+SOURCE_CLASS_4不得作为开放式候选发现源：
+
+OTHER_IBD_CLINICAL_ONLY
+PRECLINICAL_MECHANISTIC_ONLY
+
+这两类是：
+
+classification/downgrade state
+
+不是：
+
+要求穷举所有UC或preclinical靶点的候选发现宇宙。
+
+如果一个已枚举entity最终只具有：
+
+OTHER_IBD_CLINICAL_ONLY
+
+或：
+
+PRECLINICAL_MECHANISTIC_ONLY
+
+则如实分类。
+
+但禁止为了“完整”
+去穷举所有UC药物或所有preclinical靶点。
+
+==================================================
+4.Track A候选发现完成标准
+==================================================
+
+Track A discovery只需完成以下3类：
+
+REGULATORY
+MAJOR_CROHN_GUIDELINES
+CROHN_PHASE2_3_EMERGING
+
+当以下条件全部满足：
+
+1.FDA检索完成；
+2.EMA检索完成；
+3.ECCO检索完成；
+4.ACG检索完成；
+5.AGA检索完成；
+6.一次PubMed Crohn Phase2/3 targeted search完成；
+7.一次ClinicalTrials.gov identity/stage核查完成；
+8.direct target映射完成；
+9.重复target entity去重完成；
+
+则写：
+
+TRACK_A_DISCOVERY_STATUS=COMPLETE_WITHIN_PREDEFINED_DISCOVERY_UNIVERSE
+
+注意：
+
+这表示：
+
+“在预定义Discovery Universe内完成”
+
+绝对不能解释成：
+
+“穷尽了Human Crohn历史上所有可能靶点”。
+
+完成后禁止继续开放式检索新target。
+
+==================================================
+5.Track A候选发现溯源日志
+==================================================
+
+必须保存：
+
+02_FROZEN_CANDIDATES/TRACK_A_CANDIDATE_DISCOVERY_LOG.tsv
+
+每个discovery source至少记录：
+
+candidate_discovery_source
+source_class
+source_name
+source_version_or_date
+access_date
+search_date
+search_query_or_navigation_logic
+source_url_or_identifier
+candidate_entities_identified
+included_entities
+excluded_entities
+exclusion_reason
+notes
+
+例如：
+
+source_class=REGULATORY
+source_name=FDA
+
+或：
+
+source_class=MAJOR_CROHN_GUIDELINE
+source_name=ECCO
+
+或：
+
+source_class=CROHN_CLINICAL_EMERGING
+source_name=PubMed
+
+精确保存实际使用的检索词。
+
+不要凭记忆补写。
+
+同时生成：
+
+02_FROZEN_CANDIDATES/TRACK_A_DISCOVERY_SCOPE.json
+
+内容至少包括：
+
+THERAPEUTIC_EVIDENCE_CUTOFF_DATE
+PREDEFINED_DISCOVERY_SOURCES
+ACTUAL_SOURCES_ACCESSED
+SEARCH_DATES
+SEARCH_QUERIES
+UNAVAILABLE_SOURCES
+DISCOVERY_COMPLETION_STATUS
+
+==================================================
+6.Human治疗证据分层
+==================================================
+
+Human证据等级：
+
+CROHN_CLINICALLY_ESTABLISHED
+
+CROHN_CLINICAL_EMERGING
+
+OTHER_IBD_CLINICAL_ONLY
+
+PRECLINICAL_MECHANISTIC_ONLY
+
+定义：
+
+CROHN_CLINICALLY_ESTABLISHED：
+
+-Crohn正式监管批准适应证；
+或
+-高等级Crohn临床证据且进入权威指南/正式临床实践。
+
+CROHN_CLINICAL_EMERGING：
+
+-Crohn Human临床研究已有明确疗效信号；
+-尚未达到ESTABLISHED。
+
+OTHER_IBD_CLINICAL_ONLY：
+
+-UC/其他Human IBD存在临床依据；
+-Crohn直接临床证据不足。
+
+PRECLINICAL_MECHANISTIC_ONLY：
+
+-仅有Human机制、动物、体外或preclinical证据；
+-不得称为临床验证target。
+
+证据优先级：
+
+1.监管批准/official label
+2.权威指南
+3.RCT
+4.其他Human临床试验
+5.Human机制研究
+6.preclinical
+
+只查询足够：
+
+确定direct target
+确定mechanism
+确定selectivity
+确定Crohn evidence level
+
+的核心来源。
+
+不要做无限文献综述。
+
+==================================================
+7.Target entity不默认等于单基因
+==================================================
+
+每个Track A候选首先定义：
+
+TARGET_ENTITY_ID
+TARGET_ENTITY_NAME
+
+TARGET_ENTITY_TYPE：
+
+GENE
+PROTEIN
+PROTEIN_COMPLEX
+LIGAND
+CYTOKINE_RECEPTOR_COMPLEX
+INTEGRIN_COMPLEX
+OTHER_DEFINED_ENTITY
+
+并记录：
+
+TARGET_ENTITY_COMPONENTS
+
+例如：
+
+JAK1
+
+TARGET_ENTITY_TYPE=PROTEIN
+TARGET_ENTITY_COMPONENTS=JAK1
+
+α4β7：
+
+TARGET_ENTITY_TYPE=INTEGRIN_COMPLEX
+TARGET_ENTITY_COMPONENTS=ITGA4;ITGB7
+
+Human临床证据属于真实direct target entity。
+
+禁止：
+
+复合物临床证据
+→自动拆给每个component同等级临床证据。
+
+==================================================
+8.Human drug→direct target精确映射
+==================================================
+
+每个Human治疗证据记录：
+
+drug
+direct_target_entity
+target_entity_type
+target_entity_components
+target_selectivity
+mechanism_of_action
+disease
+Crohn_evidence_level
+study_type
+publication_year
+PMID
+DOI
+regulatory_or_guideline_source
+evidence_cutoff_date
+
+禁止：
+
+某JAK inhibitor有效
+→JAK1/JAK2/JAK3/TYK2全部获得同等级证据。
+
+anti-TNF
+→TNFRSF1A/TNFRSF1B自动获得同等级clinical evidence。
+
+anti-IL23p19
+→整条IL23R-JAK-TYK2-STAT链全部升级。
+
+α4β7 biologic
+→ITGA4和ITGB7自动分别继承同等级证据。
+
+clinical evidence只能赋给真实direct target entity。
+
+==================================================
+9.冻结Track A候选池
+==================================================
+
+生成：
+
+02_FROZEN_CANDIDATES/TRACK_A_FROZEN_CANDIDATES.tsv
+02_FROZEN_CANDIDATES/TRACK_A_FROZEN_CANDIDATES.json
+
+字段至少包括：
+
+TARGET_ENTITY_ID
+TARGET_ENTITY_NAME
+TARGET_ENTITY_TYPE
+TARGET_ENTITY_COMPONENTS
+HUMAN_THERAPEUTIC_EVIDENCE
+DIRECT_TARGET_STATUS
+MECHANISM_OF_ACTION
+INTERVENTION_DIRECTION
+DISCOVERY_SOURCE_CLASS
+CANDIDATE_DISCOVERY_SOURCE
+SOURCE_VERSION_OR_DATE
+SEARCH_DATE
+
+生成SHA256：
+
+TRACK_A_FROZEN_CANDIDATES.sha256
+
+写：
+
+TRACK_A_CANDIDATE_POOL_STATUS=FROZEN
+
+只有snapshot写盘＋hash成功，
+才允许进入下一阶段。
+
+禁止新增Track A候选。
+
+==================================================
+10.冻结Target→Program→Lineage锚定关系
+==================================================
+
+Track A候选来自Human治疗证据，
+所以候选进入时尚没有合法的primary Dog supporting lineage。
+
+因此必须增加独立snapshot。
+
+此时允许读取：
+
+-frozen25program名称
+-program ID
+-program正式gene membership
+-program原始definition
+-lineage definition
+-pathway topology/annotation
+-program dictionary
+
+仍禁止读取：
+
+-Dog candidate-specific logFC
+-Dog candidate-specific NES/FDR
+-Dog candidate-specific leading-edge
+-哪个lineage结果更漂亮
+
+目标：
+
+在看Dog candidate结果之前，
+冻结每个Track A target：
+
+允许锚定哪些frozen program
+允许锚定哪些lineage/context
+
+记录：
+
+TARGET_ENTITY_ID
+ALLOWED_FROZEN_PROGRAMS
+ALLOWED_LINEAGES
+ANCHOR_TYPE
+
+ANCHOR_TYPE：
+
+CELL_INTRINSIC
+MULTILINEAGE
+LIGAND_RECEPTOR
+INTERCELLULAR
+COMPLEX_TARGET
+
+如果target可能涉及多个lineage：
+
+不得提前选“最好的一条”。
+
+写：
+
+MULTILINEAGE
+
+或预先记录：
+
+source_lineage→target_lineage
+
+生成：
+
+TARGET_PROGRAM_LINEAGE_ANCHOR_SNAPSHOT.tsv
+TARGET_PROGRAM_LINEAGE_ANCHOR_SNAPSHOT.json
+TARGET_PROGRAM_LINEAGE_ANCHOR_SNAPSHOT.sha256
+
+写：
+
+TARGET_PROGRAM_LINEAGE_ANCHOR_STATUS=FROZEN
+
+==================================================
+11.Track B候选池冻结
+==================================================
+
+Track B禁止：
+
+看到结果漂亮
+→再宣布某蛋白是canonical regulator
+→临时加入。
+
+允许候选来源只有：
+
+A.冻结25program正式gene membership；
+
+B.冻结program原始source definition/pathway topology；
+
+C.Reactome program：
+仅允许项目冻结版本中明确编码的
+receptor/kinase/TF/adaptor/ligand/effector；
+
+D.Hallmark/GO若没有明确topology：
+原则上只能从冻结gene membership产生候选。
+
+后查文献只能：
+
+补支持/限制证据。
+
+不得：
+
+创造新的Track B candidate。
+
+节点类型：
+
+receptor
+kinase
+transcription_factor
+signaling_adaptor
+canonical_effector
+ligand/receptor component
+
+分类：
+
+DIRECT_TRANSCRIPT_SUPPORTED_NODE
+
+PROGRAM_ANCHORED_REGULATORY_NODE
+
+生成：
+
+TRACK_B_FROZEN_CANDIDATES.tsv
+TRACK_B_FROZEN_CANDIDATES.json
+TRACK_B_FROZEN_CANDIDATES.sha256
+
+写：
+
+TRACK_B_CANDIDATE_POOL_STATUS=FROZEN
+
+==================================================
+12.解除Dog结果锁
+==================================================
+
+只有以下全部存在并hash成功：
+
+TRACK_A_FROZEN_CANDIDATES
+
+TARGET_PROGRAM_LINEAGE_ANCHOR_SNAPSHOT
+
+TRACK_B_FROZEN_CANDIDATES
+
+才：
+
+DOG_TARGET_RESULTS_UNLOCKED=TRUE
+
+记录：
+
+07_LOGS/DOG_RESULTS_UNLOCK_TIMESTAMP.txt
+
+之后才允许读取Dog candidate-specific结果。
+
+==================================================
+13.快速定位既有冻结结果
+==================================================
+
+解锁后优先：
+
+CURRENT_STATE
+→RESULTS_REGISTER
+→DECISIONS
+→final/frozen结果目录
+
+需要：
+
+-冻结25lineage×program结果
+-Dog disease direction
+-Human Crohn disease direction
+-Dog/Human gene-level结果
+-Dog/Human GSEA＋leading-edge
+-冻结1:1ortholog
+-LODO final
+-mt-QC final
+-region final
+-CeD final
+-CONCORD/SATURN/singIST summary
+-Dog external final
+-GSE190564 final
+
+禁止：
+
+扫描整个D盘。
+
+禁止：
+
+先打开原始scRNA矩阵。
+
+已有final table：
+直接使用。
+
+多个版本无法唯一确定：
+
+STOP_AND_REPORT_VERSION_AMBIGUITY
+
+==================================================
+14.INPUT_MANIFEST
+==================================================
+
+仅记录实际使用文件：
+
+file_path
+file_name
+file_size
+modification_time
+checksum_sha256
+source_phase
+source_status
+source_version
+purpose
+
+保存：
+
+01_INPUT_MANIFEST/input_manifest.tsv
+01_INPUT_MANIFEST/input_manifest.json
+
+不要hash整个项目。
+
+==================================================
+15.证据严格分3层
+==================================================
+
+TARGET_LEVEL_EVIDENCE：
+
+-target/entity自身Dog gene evidence
+-target/entity自身Human gene evidence
+-orthology
+-leading-edge
+-protein/phosphorylation
+-direct target engagement
+-direct pharmacology
+-independent canine target evidence
+
+PROGRAM_LEVEL_EVIDENCE：
+
+-anchored frozen program
+-Dog program direction
+-Human program direction
+-cross-species activity concordance
+
+LINEAGE_CONTEXT_EVIDENCE：
+
+-CONCORD
+-SATURN
+-singIST
+-lineage-level state evidence
+
+禁止：
+
+CONCORD Myeloid positive
+→JAK1 target-level validation。
+
+SATURN T positive
+→STAT3 target-level validation。
+
+==================================================
+16.疾病方向拆成3层
+==================================================
+
+LEVEL1_GENE_DIRECTION
+
+LEVEL2_PROGRAM_ACTIVITY_DIRECTION
+
+LEVEL3_THERAPEUTIC_DIRECTION
+
+对于JAK1/STAT3等调控节点：
+
+Level1不是绝对硬门槛。
+
+Level2必须有可靠支持。
+
+Track A最高角色：
+
+Level3必须逻辑成立。
+
+禁止：
+
+Dog logFC>0AND Human logFC>0
+
+作为所有target统一硬条件。
+
+==================================================
+17.统一状态语义
+==================================================
+
+所有主要支持状态只能使用：
+
+SUPPORTED
+
+PARTIALLY_SUPPORTED
+
+NO_POSITIVE_SUPPORT
+
+CONTRADICTED
+
+NOT_ASSESSABLE
+
+NOT_EVALUATED_AFTER_TERMINAL_GATE
+
+定义：
+
+SUPPORTED
+=明确支持。
+
+PARTIALLY_SUPPORTED
+=存在支持，但不完整。
+
+NO_POSITIVE_SUPPORT
+=实际评估过，但没有足够正支持。
+
+CONTRADICTED
+=存在明确反方向/实质冲突。
+
+NOT_ASSESSABLE
+=数据不足，无法判断。
+
+NOT_EVALUATED_AFTER_TERMINAL_GATE
+=Hard Gate已终止该角色，后续decision-only检查未执行。
+
+禁止：
+
+NOT_ASSESSABLE→NO_POSITIVE_SUPPORT
+
+禁止：
+
+FDR不显著→CONTRADICTED
+
+禁止：
+
+NOT_EVALUATED_AFTER_TERMINAL_GATE→NO_SUPPORT
+
+==================================================
+18.Orthology
+==================================================
+
+优先读取已有冻结ortholog。
+
+禁止重新下载全Ensembl。
+
+单基因/蛋白：
+
+ONE_TO_ONE
+COMPLEX
+ABSENT
+NOT_ASSESSABLE
+
+复合entity：
+
+ALL_ESSENTIAL_COMPONENTS_SUPPORTED
+PARTIAL_COMPONENT_SUPPORT
+COMPONENT_CONTRADICTION
+NOT_ASSESSABLE
+
+逐component记录。
+
+Human复合物临床证据仍属于entity，
+不能拆分为component clinical evidence。
+
+==================================================
+19.Lineage规则
+==================================================
+
+Track A：
+
+PRIMARY_SUPPORTING_LINEAGE必须来源于：
+
+TARGET_PROGRAM_LINEAGE_ANCHOR_SNAPSHOT
+
+Track B：
+
+来源于其冻结source program。
+
+状态：
+
+MULTILINEAGE_CONCORDANT
+CONCORDANT_IN_PRIMARY_LINEAGE
+LINEAGE_RESTRICTED
+LINEAGE_DISCORDANT
+NOT_ASSESSABLE
+
+cell-intrinsic target：
+
+优先same-lineage。
+
+ligand/receptor/adhesion/intercellular：
+
+允许预冻结：
+
+source-lineage→target-lineage
+
+architecture。
+
+禁止后验创造跨细胞解释。
+
+==================================================
+20.leading-edge
+==================================================
+
+只读取已有leading-edge。
+
+禁止重跑GSEA。
+
+记录：
+
+DOG_LEADING_EDGE
+
+HUMAN_LEADING_EDGE
+
+CROSS_SPECIES_LEADING_EDGE_SUPPORT
+
+使用统一状态体系。
+
+leading-edge是增强证据，
+不是所有regulatory node的硬门槛。
+
+==================================================
+21.继承既有robustness
+==================================================
+
+不重算。
+
+mt-QC只适用于Epithelial。
+
+必须记录到：
+
+target×program×lineage
+
+例如：
+
+TNF|Epithelial|TNF/NFκB
+→QC-sensitive
+
+TNF|Myeloid|TNF/NFκB
+→NOT_APPLICABLE
+
+禁止：
+
+TNF整体=QC_SENSITIVE
+
+Region同样记录到对应program×lineage。
+
+region caution不是机械淘汰。
+
+如果candidate：
+
+唯一支持来自明显region-cautious program
+且无其他预冻结program/lineage支持
+
+则不能进入最高Track A角色。
+
+禁止写：
+
+region eliminated
+region controlled
+
+只能写：
+
+region influence assessed/constrained。
+
+==================================================
+22.CeD
+==================================================
+
+只继承既有结果：
+
+CROHN_CED_SHARED
+
+CROHN_CED_DISCORDANT
+
+CED_NOT_PROMINENT
+
+CED_NOT_ASSESSABLE
+
+禁止：
+
+GENERIC_INFLAMMATORY_TARGET
+
+UNIVERSAL_MUCOSAL_INFLAMMATION
+
+Crohn+CeD同向只表示：
+
+not Crohn-specific/shared with CeD。
+
+==================================================
+23.GSE190564
+==================================================
+
+冻结状态：
+
+UC_ICI_DISEASE_CONTEXT=NOT_ASSESSABLE
+
+禁止重新：
+
+下载
+demultiplex
+recluster
+猜condition
+救援。
+
+==================================================
+24.Dog external
+==================================================
+
+冻结状态：
+
+DOG_TRANSCRIPTOMIC_EXTERNAL_REPLICATION=NOT_AVAILABLE
+
+不能写成独立Dog transcriptomic replication。
+
+允许针对仍需要决策的candidate做最小文献查询：
+
+CANINE_INDEPENDENT_LITERATURE_EVIDENCE
+
+包括：
+
+protein
+phosphorylation
+cytokine
+receptor
+target engagement
+canine pharmacology
+
+不要做全领域review。
+
+==================================================
+25.证据溯源
+==================================================
+
+每条外部证据记录：
+
+target_entity_id
+target_entity_name
+target_entity_type
+target_component_if_applicable
+drug_if_applicable
+direct_target_entity
+target_selectivity
+mechanism_of_action
+disease
+evidence_level
+study_type
+publication_year
+PMID
+DOI
+source_title
+source_species
+source_version_or_date
+access_date
+evidence_cutoff_date
+short_evidence_statement
+supports_or_limits
+
+保存：
+
+03_EVIDENCE/evidence_provenance.tsv
+
+==================================================
+26.Human治疗和犬药理状态
+==================================================
+
+HUMAN_IBD_THERAPEUTIC_EVIDENCE：
+
+CROHN_CLINICALLY_ESTABLISHED
+CROHN_CLINICAL_EMERGING
+OTHER_IBD_CLINICAL_ONLY
+PRECLINICAL_MECHANISTIC_ONLY
+NONE
+NOT_ASSESSABLE
+
+CANINE_PHARMACOLOGICAL_FEASIBILITY：
+
+ESTABLISHED
+EMERGING
+NO_POSITIVE_SUPPORT
+CONTRADICTED
+NOT_ASSESSABLE
+NOT_EVALUATED_AFTER_TERMINAL_GATE
+
+CANINE_CIE_EFFICACY：
+
+TESTED
+UNTESTED
+NOT_ASSESSABLE
+NOT_EVALUATED_AFTER_TERMINAL_GATE
+
+Human药有效
+≠
+犬CIE已验证。
+
+==================================================
+27.Target translation与specific-drug translation分开
+==================================================
+
+TARGET_TRANSLATION_STATUS：
+
+SUPPORTED
+PARTIALLY_SUPPORTED
+NO_POSITIVE_SUPPORT
+CONTRADICTED
+NOT_ASSESSABLE
+NOT_EVALUATED_AFTER_TERMINAL_GATE
+
+SPECIFIC_DRUG_TRANSLATION_STATUS：
+
+同样使用上述状态。
+
+TARGET_TRANSLATION_STATUS=SUPPORTED
+
+绝不等于：
+
+Human具体药可以直接给Dog使用。
+
+specific drug还涉及：
+
+-binding/cross-reactivity
+-target epitope/entity compatibility
+-target engagement
+-PK
+-immunogenicity
+
+缺乏这些证据：
+
+specific-drug translation不得自动SUPPORTED。
+
+==================================================
+28.内部证据不重复计数
+==================================================
+
+归类：
+
+PRIMARY_CROSS_SPECIES_DISEASE_EVIDENCE
+
+INTERNAL_ROBUSTNESS_SENSITIVITY
+
+LINEAGE_CONTEXT
+
+INDEPENDENT_CANINE_BIOLOGICAL_EVIDENCE
+
+HUMAN_THERAPEUTIC_EVIDENCE
+
+CANINE_PHARMACOLOGICAL_EVIDENCE
+
+来自同一Dog n=7核心数据的：
+
+pathway
+LODO
+CONCORD
+SATURN
+QC
+
+不能写成多次独立validation。
+
+==================================================
+29.强制支持＋反证
+==================================================
+
+每个candidate必须同时记录：
+
+SUPPORTING_EVIDENCE
+
+CONTRADICTORY_OR_LIMITING_EVIDENCE
+
+禁止只记录支持。
+
+==================================================
+30.Track A Hard Gates
+==================================================
+
+HG_A1_HUMAN_THERAPEUTIC_GATE
+
+最高角色要求：
+
+CROHN_CLINICALLY_ESTABLISHED
+或
+CROHN_CLINICAL_EMERGING
+
+----------------------------------
+
+HG_A2_DIRECT_TARGET_GATE
+
+Human治疗证据必须直接对应真实target entity。
+
+----------------------------------
+
+HG_A3_ENTITY_IDENTITY_ORTHOLOGY_GATE
+
+Dog-Human target/entity对应关系必须足够明确。
+
+----------------------------------
+
+HG_A4_PROGRAM_CONCORDANCE_GATE
+
+预冻结anchor中必须存在Dog-Human同方向program支持。
+
+若全部相关program均CONTRADICTED：
+
+失败。
+
+----------------------------------
+
+HG_A5_LINEAGE_GATE
+
+需要：
+
+同lineage支持
+
+或：
+
+预冻结biologically matched intercellular architecture。
+
+----------------------------------
+
+HG_A6_THERAPEUTIC_DIRECTION_GATE
+
+Human干预方向必须与Dog异常biology逻辑一致。
+
+明确反方向：
+
+失败。
+
+----------------------------------
+
+HG_A7_ROBUSTNESS_GATE
+
+若唯一支持：
+
+依赖QC-sensitive结果
+
+或
+
+唯一严重region-cautious结果
+
+且无其他预冻结支持：
+
+不能最高优先。
+
+CANINE_CIE_EFFICACY=UNTESTED
+
+不是Hard Gate失败。
+
+==================================================
+31.TERMINAL_GATE_SHORT_CIRCUIT
+==================================================
+
+仅当：
+
+1.预定义Hard Gate明确失败；
+2.最高角色已不可能获得；
+3.后续步骤只服务于该角色；
+4.后续证据不可能改变冻结规则下的分类上限；
+
+才允许：
+
+TERMINAL_GATE_SHORT_CIRCUIT=TRUE
+
+后续未查字段：
+
+NOT_EVALUATED_AFTER_TERMINAL_GATE
+
+必须记录：
+
+TERMINAL_GATE
+TERMINAL_GATE_REASON
+SKIPPED_FIELDS
+
+如果candidate同时属于Track B：
+
+Track A short-circuit
+不得停止Track B。
+
+==================================================
+32.Track B
+==================================================
+
+PRIORITIZED_MOLECULAR_NODE综合依据：
+
+-frozen cross-species program
+-canonical source-supported regulatory role
+-orthology/entity mapping
+-target-level evidence
+或
+-program-anchored evidence
+-lineage context
+-robustness
+-independent canine biology if available
+
+不要求Human成熟药物。
+
+核心program若明确CONTRADICTED：
+
+不能成为PRIORITIZED_MOLECULAR_NODE。
+
+target mRNA不显著：
+
+不自动淘汰PROGRAM_ANCHORED_REGULATORY_NODE。
+
+==================================================
+33.Track A/B禁止自动升级
+==================================================
+
+Track A资格：
+
+Human therapeutic evidence
+＋
+canine translational conservation
+
+Track B资格：
+
+cross-species mechanistic evidence
+
+禁止：
+
+STAT3在Track B很强
+→自动成为Track A治疗靶点。
+
+禁止：
+
+Human成熟target
+→自动成为Track B关键节点。
+
+双重角色：
+
+必须分别独立通过两Track标准。
+
+==================================================
+34.最终角色
+==================================================
+
+只使用：
+
+PRIORITIZED_THERAPEUTIC_TARGET
+
+PRIORITIZED_MOLECULAR_NODE
+
+MECHANISTIC_CANDIDATE
+
+EXPLORATORY_TARGET
+
+Track A明确失败可记录：
+
+NOT_PRIORITIZED_FOR_CANINE_TRANSLATION
+
+禁止：
+
+Tier排名
+总分
+weighted score
+强制Top5
+强制3-6个节点
+
+允许：
+
+0个PRIORITIZED_THERAPEUTIC_TARGET。
+
+==================================================
+35.Decision Audit
+==================================================
+
+每个曾进入候选池的entity都记录：
+
+TARGET_ENTITY_ID
+TARGET_ENTITY_NAME
+TARGET_ENTITY_TYPE
+TARGET_ENTITY_COMPONENTS
+
+ENTRY_TRACK
+ENTRY_REASON
+
+CANDIDATE_DISCOVERY_SOURCE
+SOURCE_VERSION_OR_DATE
+SEARCH_DATE
+
+SOURCE_PROGRAM
+SOURCE_LINEAGE
+
+PRE_FROZEN_ALLOWED_PROGRAMS
+PRE_FROZEN_ALLOWED_LINEAGES
+
+ORTHOLOGY_STATUS
+ENTITY_ORTHOLOGY_STATUS
+
+HUMAN_THERAPEUTIC_GATE_STATUS
+DIRECT_TARGET_GATE_STATUS
+PROGRAM_CONCORDANCE_GATE_STATUS
+LINEAGE_GATE_STATUS
+TARGET_LEVEL_GATE_STATUS
+THERAPEUTIC_DIRECTION_GATE_STATUS
+ROBUSTNESS_GATE_STATUS
+
+TERMINAL_GATE_SHORT_CIRCUIT
+TERMINAL_GATE
+TERMINAL_GATE_REASON
+SKIPPED_FIELDS
+
+SUPPORTING_EVIDENCE
+CONTRADICTORY_OR_LIMITING_EVIDENCE
+
+DOWNGRADE_REASON
+FINAL_ROLE
+
+禁止悄悄删除失败candidate。
+
+保存：
+
+04_DECISION_AUDIT/target_decision_audit.tsv
+
+==================================================
+36.最终输出
+==================================================
+
+必须生成：
+
+05_FINAL_RESULTS/ALL_TARGETS_FINAL.tsv
+
+05_FINAL_RESULTS/TRACK_A_THERAPEUTIC_TRANSLATION.tsv
+
+05_FINAL_RESULTS/TRACK_B_MOLECULAR_NODES.tsv
+
+05_FINAL_RESULTS/FINAL_PRIORITIZED_TARGETS.tsv
+
+05_FINAL_RESULTS/TARGET_EVIDENCE_CARDS.md
+
+05_FINAL_RESULTS/FINAL_BIOLOGICAL_SUMMARY.md
+
+Evidence Card只写：
+
+Target/entity
+Final role
+Track
+Primary lineage/context
+Anchored frozen program
+Human therapeutic evidence
+Dog-Human program evidence
+Target-level evidence
+Lineage-context evidence
+Robustness
+Independent canine evidence
+Main supporting evidence
+Main limitation
+Target translation status
+Specific-drug translation status
+Future validation meaning
+
+保持简洁。
+
+==================================================
+37.FINAL_BIOLOGICAL_SUMMARY
+==================================================
+
+必须用生物学语言。
+
+不要堆内部：
+
+Gate code
+hash
+status code
+run metadata
+
+回答：
+
+1.哪些Human Crohn治疗靶点最值得Dog CIE后续验证？
+2.主要由哪个lineage/program支持？
+3.为什么？
+4.主要限制？
+5.哪些属于mechanistic node？
+6.哪些Human成熟治疗靶点因Dog证据不足被排除？
+7.哪些无法评估？
+8.不能推断什么？
+
+禁止：
+
+validated canine therapeutic target
+
+effective treatment for canine CIE
+
+Human drug can directly be used in dogs
+
+允许：
+
+biologically supported candidate therapeutic target for canine validation
+
+==================================================
+38.Figure-ready表
+==================================================
+
+只做数据表。
+
+不要画复杂Figure。
+
+生成：
+
+06_FIGURE_TABLES/Figure_Target_Prioritization.tsv
+
+字段：
+
+target_entity
+entity_type
+final_role
+track
+primary_lineage
+conserved_program
+human_therapeutic_level
+program_concordance
+target_level_support
+canine_independent_support
+main_limitation
+target_translation_status
+specific_drug_translation_status
+
+Figure展示数量：
+
+不能影响分类。
+
+==================================================
+39.技术错误例外
+==================================================
+
+VERIFIED_IMPLEMENTATION_OR_INPUT_ERROR_EXCEPTION
+
+如果确认：
+
+-code implementation error
+-incorrect input
+-wrong version
+-ortholog mapping error
+-lineage/program mapping error
+-sign parsing error
+-identifier mismatch
+-implementation duplication/omission
+-corrupted intermediate
+
+必须：
+
+1.停止当前run；
+2.记录发现时间；
+3.记录verification method；
+4.记录affected components；
+5.当前ANALYSIS_RUN_ID标记INVALIDATED；
+6.科学规则保持不变；
+7.仅修复确认技术错误；
+8.增加SCRIPT_WORKFLOW_VERSION；
+9.创建新ANALYSIS_RUN_ID；
+10.必要时更新INPUT_MANIFEST；
+11.从冻结candidate snapshots完整重跑；
+12.禁止只重跑之前结果“不好看”的candidate；
+13.保留invalidated run和error log。
+
+==================================================
+40.STOP_AND_REPORT
+==================================================
+
+以下不得自行救援：
+
+DATA_FILE_MISSING
+
+FROZEN_PROGRAM_NOT_UNIQUELY_IDENTIFIED
+
+TARGET_IDENTITY_AMBIGUOUS
+
+DRUG_DIRECT_TARGET_RELATION_UNRESOLVED
+
+ORTHOLOGY_UNRESOLVED
+
+CONFLICTING_FROZEN_RESULT_FILES
+
+Track A关键discovery source若无法访问：
+
+记录：
+
+SOURCE_UNAVAILABLE
+
+如果只有单个来源不可用，
+但其他预定义来源正常：
+
+继续执行，
+并在discovery log注明限制。
+
+如果关键Human候选发现来源大面积不可访问，
+无法保证predefined discovery universe基本覆盖：
+
+STOP_AND_REPORT_DISCOVERY_SOURCE_FAILURE
+
+candidate-local问题：
+
+该candidate标NOT_ASSESSABLE并继续。
+
+只有影响全局真实性时才停止整个run。
+
+==================================================
+41.性能要求
+==================================================
+
+必须FAST_PATH_ONLY。
+
+优先：
+
+CURRENT_STATE
+→RESULTS_REGISTER
+→final/frozen table
+→candidate-specific读取
+
+严禁：
+
+原始matrix优先
+整个D盘扫描
+反复扫描项目
+大规模PDF下载
+全文领域综述
+重复网页访问
+无意义Figure
+重建AnnData/Seurat
+重跑embedding
+重跑GSEA
+
+数据处理：
+
+-只读取必要列；
+-大表按candidate过滤；
+-同一结果文件尽量只解析一次；
+-必要小表放本run _tmp；
+-批量处理candidate；
+-避免重复I/O。
+
+如果已有：
+
+gene DE
+GSEA
+leading-edge
+ortholog
+
+禁止为了几个target重新读取几十GB单细胞矩阵。
+
+Human discovery阶段：
+
+只完成预定义Discovery Universe。
+
+达到：
+
+TRACK_A_DISCOVERY_STATUS=COMPLETE_WITHIN_PREDEFINED_DISCOVERY_UNIVERSE
+
+后立即停止候选发现。
+
+不要继续“再找找还有没有”。
+
+==================================================
+42.缓存和临时文件清理
+==================================================
+
+最终结果验证可读后：
+
+清理本run产生的无用缓存。
+
+允许删除：
+
+TARGET_PRIORITIZATION_V1_0\_tmp\*
+
+本run临时下载
+
+本run临时解压
+
+本run scratch
+
+未被final引用的duplicate intermediate
+
+本workflow的__pycache__
+
+本workflow的.pytest_cache
+
+本run局部浏览器/脚本缓存
+
+禁止删除：
+
+原始数据
+
+frozen results
+
+Track A snapshot
+
+Track B snapshot
+
+anchor snapshot
+
+snapshot hash
+
+Track A discovery log
+
+Track A discovery scope
+
+INPUT_MANIFEST
+
+evidence provenance
+
+decision audit
+
+final results
+
+scripts
+
+workflow version
+
+error log
+
+invalidated run audit
+
+其他项目数据
+
+其他项目cache
+
+全局pip cache
+
+Conda环境
+
+ESM/model cache
+
+系统cache
+
+无法确认：
+不删。
+
+生成：
+
+07_LOGS/CACHE_CLEANUP_REPORT.tsv
+
+字段：
+
+deleted_path
+deleted_size_bytes
+reason
+
+汇总：
+
+TOTAL_SPACE_FREED
+
+完成后删除空的_tmp目录。
+
+==================================================
+43.最终轻量完整性检查
+==================================================
+
+只检查：
+
+-Track A discovery log存在
+-Track A discovery scope存在
+-Track A snapshot＋hash存在
+-anchor snapshot＋hash存在
+-Track B snapshot＋hash存在
+-input manifest存在
+-evidence provenance存在
+-decision audit包含所有candidate
+-final result可读取
+-final role无非法值
+-失败candidate未消失
+-NOT_ASSESSABLE未误写NO_POSITIVE_SUPPORT
+-short-circuit状态正确
+-Track A/B未自动升级
+-complex entity临床证据未错误拆分
+-supporting＋limiting evidence都存在
+-cache cleanup report存在
+
+禁止重新计算生物学结果。
+
+==================================================
+44.最终终端报告
+==================================================
+
+最终只输出：
+
+ANALYSIS_RUN_ID=
+
+DESIGN_VERSION=
+
+SCRIPT_WORKFLOW_VERSION=
+
+THERAPEUTIC_EVIDENCE_CUTOFF_DATE=
+
+TRACK_A_DISCOVERY_STATUS=
+
+TRACK_A_DISCOVERY_SOURCES_USED=
+
+TRACK_A_CANDIDATES=
+
+TRACK_B_CANDIDATES=
+
+PRIORITIZED_THERAPEUTIC_TARGETS=
+
+PRIORITIZED_MOLECULAR_NODES=
+
+MECHANISTIC_CANDIDATES=
+
+EXPLORATORY_TARGETS=
+
+NOT_PRIORITIZED_FOR_CANINE_TRANSLATION=
+
+NOT_ASSESSABLE_CANDIDATES=
+
+TERMINAL_GATE_SHORT_CIRCUITED_CANDIDATES=
+
+MAIN_OUTPUT_DIR=
+
+CACHE_SPACE_FREED=
+
+FINAL_STATUS=
+
+成功时必须：
+
+FINAL_STATUS=TARGET_PRIORITIZATION_V1_0_COMPLETE_AND_FROZEN
+
+然后：
+
+STOP
+
+禁止：
+
+继续建议分析
+
+继续搜新dataset
+
+继续搜更多target
+
+继续优化Gate
+
+重新打开旧Phase
+
+进入下一分析Phase。

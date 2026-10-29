@@ -1,0 +1,12 @@
+Phase3 environment captured 2026-08-24 15:52:23
+R R version 4.4.3 (2025-02-28 ucrt)
+Platform x86_64-w64-mingw32
+edgeR 4.4.2
+limma 3.62.2
+locfit 1.5.9.12
+statmod 1.5.1
+R executable D:/Canine_CIE_CrossSpecies/envs/phase3_r_portable/app/bin/x64/R.exe
+R library paths D:/Canine_CIE_CrossSpecies/envs/phase3_r_portable/library_user; D:/Canine_CIE_CrossSpecies/envs/phase3_r_portable/app/library
+Primary model: ~ condition (Healthy reference)
+Primary framework: edgeR quasi-likelihood, robust=TRUE
+Random seed: 20240824

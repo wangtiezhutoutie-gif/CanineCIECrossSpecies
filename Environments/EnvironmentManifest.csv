@@ -1,0 +1,12 @@
+﻿stage_or_scope,package_file,verification_basis,status
+phase1_environment,Environments/phase1_environment.yml,copied existing project record,PASS
+phase2_environment,Environments/phase2_environment.yml,copied existing project record,PASS
+phase3_environment,Environments/phase3_environment.txt,copied existing project record,PASS
+PHASE11_CONDA_EXPLICIT,Environments/PHASE11_CONDA_EXPLICIT.txt,copied existing project record,PASS
+PHASE11_CONDA_PACKAGES,Environments/PHASE11_CONDA_PACKAGES.json,copied existing project record,PASS
+PHASE11_ENVIRONMENT_HASH,Environments/PHASE11_ENVIRONMENT_HASH.json,copied existing project record,PASS
+PHASE11_R_INSTALLED_PACKAGES,Environments/PHASE11_R_INSTALLED_PACKAGES.csv,copied existing project record,PASS
+PHASE11_SESSION_INFO,Environments/PHASE11_SESSION_INFO.txt,copied existing project record,PASS
+gpu-audit,Environments/gpu-audit.txt,copied existing project record,PASS
+pip-freeze-phase13,Environments/pip-freeze-phase13.txt,copied existing project record,PASS
+requirements-phase13,Environments/requirements-phase13.txt,copied existing project record,PASS

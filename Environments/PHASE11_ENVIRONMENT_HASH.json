@@ -1,0 +1,23 @@
+{
+  "algorithm": "SHA-256",
+  "environment_hash": "5c8e05bc2aa7887f9d41991dac1d0c49cc7161d89b9a6ed00025f07005cce93f",
+  "components": [
+    {
+      "path": "11_singIST/environment/PHASE11_CONDA_EXPLICIT.txt",
+      "sha256": "92f9404a3b6ba3256fcbfdb03c9b055d24206d51693e13a74f79b45f18c55706"
+    },
+    {
+      "path": "11_singIST/environment/PHASE11_CONDA_PACKAGES.json",
+      "sha256": "69a90290796d06e7caa37f0c734368a48ad97b9ee9161691c50f97a1f5ae50f7"
+    },
+    {
+      "path": "11_singIST/environment/PHASE11_R_INSTALLED_PACKAGES.csv",
+      "sha256": "bff25d258bbac557ac556a59381113c84643ad576d1b6a5ef272b0e4b1804d87"
+    },
+    {
+      "path": "11_singIST/environment/PHASE11_SESSION_INFO.txt",
+      "sha256": "fac056fba5224f6f47b710a4963818841e780668e0f5af0fe540152e653ed905"
+    }
+  ],
+  "generated_at": "2026-08-27T09:45:18+08:00"
+}
