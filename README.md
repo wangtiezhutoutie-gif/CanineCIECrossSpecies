@@ -69,4 +69,6 @@ The release process performs static, low-cost checks only: Python compilation, R
 
 ## License and release status
 
-No authorized `LICENSE` is currently present. Until the code owners confirm project-code licensing and third-party redistribution rights and add an appropriate license, no reuse permission is granted by this package and public release remains blocked. See [RepositoryReleaseGuide.md](RepositoryReleaseGuide.md).
+The project-owned code in this repository is released under the [MIT License](LICENSE), copyright 2026 Baojie Wu. This license applies only to code and documentation that the project has the right to license. Third-party software dependencies, referenced repositories and external resources remain subject to their own licenses and terms.
+
+Source Data and other research datasets are archived or distributed separately and are not licensed by this repository's MIT License. Their reuse is governed by the applicable journal, repository, data-owner and source-dataset terms. The code release does not modify the study conclusions, algorithms, statistical thresholds, random seeds or frozen results.
